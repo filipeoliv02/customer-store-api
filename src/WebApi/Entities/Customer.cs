@@ -35,6 +35,15 @@
         }
 
         /// <summary>
+        /// Gets or sets the customer address.
+        /// </summary>
+        public string Address
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// Gets or sets the customer vat number.
         /// </summary>
         public string VatNumber
