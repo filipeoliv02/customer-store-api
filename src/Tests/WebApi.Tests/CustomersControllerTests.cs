@@ -55,7 +55,7 @@ namespace RocketStoreApi.Tests
             IDictionary<string, string[]> expectedErrors = new Dictionary<string, string[]>
             {
                 { "Name", new string[] { "The Name field is required." } },
-                { "EmailAddress", new string[] { "The Email field is required." } }
+                { "Email", new string[] { "The Email field is required." } }
             };
             
             Customer customer = new Customer();
@@ -87,7 +87,7 @@ namespace RocketStoreApi.Tests
 
             IDictionary<string, string[]> expectedErrors = new Dictionary<string, string[]>
             {
-                { "EmailAddress", new string[] { "The Email field is not a valid e-mail address." } }
+                { "Email", new string[] { "The Email field is not a valid e-mail address." } }
             };
 
             Customer customer = new Customer()
@@ -130,7 +130,7 @@ namespace RocketStoreApi.Tests
             {
                 Name = "A customer",
                 Email = "customer@server.pt",
-                VatNumber = "123456789"
+                VatNumber = "1234567890" // Invalid VAT number
             };
 
             // Act
