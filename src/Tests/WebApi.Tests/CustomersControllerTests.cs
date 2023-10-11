@@ -93,7 +93,7 @@ namespace RocketStoreApi.Tests
             Customer customer = new Customer()
             {
                 Name = "A customer",
-                EmailAddress = "An invalid email"
+                Email = "An invalid email"
             };
 
             // Act
@@ -129,7 +129,7 @@ namespace RocketStoreApi.Tests
             Customer customer = new Customer()
             {
                 Name = "A customer",
-                EmailAddress = "customer@server.pt",
+                Email = "customer@server.pt",
                 VatNumber = "123456789"
             };
 
@@ -161,13 +161,13 @@ namespace RocketStoreApi.Tests
             Customer customer1 = new Customer()
             {
                 Name = "A customer",
-                EmailAddress = "customer@server.pt"
+                Email = "customer@server.pt"
             };
 
             Customer customer2 = new Customer()
             {
                 Name = "Another customer",
-                EmailAddress = "customer@server.pt"
+                Email = "customer@server.pt"
             };
 
             // Act
@@ -202,7 +202,7 @@ namespace RocketStoreApi.Tests
             Customer customer = new Customer()
             {
                 Name = "My customer",
-                EmailAddress = "mycustomer@server.pt"
+                Email = "mycustomer@server.pt"
             };
 
             // Act

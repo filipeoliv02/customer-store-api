@@ -30,12 +30,26 @@ namespace RocketStoreApi.Models
         [EmailAddress]
         [DisplayName("Email")]
         [JsonPropertyName("emailAddress")]
-        public string EmailAddress
+        public string Email
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Gets or sets the customer address.
+        /// </summary>
+        [DisplayName("Address")]
+        [JsonPropertyName("address")]
+        public string Address
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Gets or sets the customer vat number.
+        /// </summary>
         [RegularExpression("^[0-9]{9}$")]
         [DisplayName("VAT Number")]
         [JsonPropertyName("vatNumber")]
