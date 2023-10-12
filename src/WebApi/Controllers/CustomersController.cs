@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -62,6 +63,35 @@ namespace RocketStoreApi.Controllers
                 result.Value);
         }
 
+        /// <summary>
+        /// Lists all customers.
+        /// </summary>
+        /// <returns>
+        /// <param name="name">The name of the customers.</param>
+        /// <param name="email">The email of the customer(since the email is unique we can only get a customer,if there is a match).</param>
+        /// The list of all customers.
+        /// </returns>
+        [HttpGet("api/customers")]
+        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(Customer[]), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> ListCustomersAsync([FromQuery] string name = null, [FromQuery] string email = null)
+        {
+            Result<List<CustomerDto>> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
+                .ListCustomersAsync(name, email).ConfigureAwait(false);
+
+            if (result.Failed)
+            {
+                return this.BadRequest(
+                    new ProblemDetails()
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Title = result.ErrorCode,
+                        Detail = result.ErrorDescription
+                    });
+            }
+
+            return this.Ok(result.Value);
+        }
         #endregion
 
         #region Private Methods

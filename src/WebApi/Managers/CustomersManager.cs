@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RocketStoreApi.Storage;
 
@@ -78,6 +80,28 @@ namespace RocketStoreApi.Managers
 
             return Result<Guid>.Success(
                 new Guid(entity.Id));
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<List<Models.CustomerDto>>> ListCustomersAsync(string name, string email, CancellationToken cancellationToken = default)
+        {
+            List<Entities.Customer> entities = await this.Context.Customers.ToListAsync(cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                // This could be a FirstOrDefault(). Since the email is unique we can only get one customer,if there is a match. But that would add an extra creation of a list and reduce performance for a small list of customers.
+                entities = entities.Where(c => c.Email.Equals(email, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            // Optionally filter the customers by name and/or email
+            if (!string.IsNullOrEmpty(name))
+            {
+                entities = entities.Where(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            List<Models.CustomerDto> customers = this.Mapper.Map<List<Entities.Customer>, List<Models.CustomerDto>>(entities);
+
+            return Result<List<Models.CustomerDto>>.Success(customers);
         }
 
         #endregion
