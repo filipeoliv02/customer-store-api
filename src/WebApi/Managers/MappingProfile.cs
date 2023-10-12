@@ -24,6 +24,8 @@ namespace RocketStoreApi.Managers
                     {
                         target.Id = Guid.NewGuid().ToString();
                     });
+
+            this.CreateMap<Entities.Customer, Models.CustomerDto>();
         }
 
         #endregion
