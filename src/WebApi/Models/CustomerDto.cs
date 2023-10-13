@@ -3,7 +3,7 @@
 namespace RocketStoreApi.Models
 {
     /// <summary>
-    /// Defines a customer.
+    /// Defines a customer dto.
     /// </summary>
     public class CustomerDto
     {

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RocketStoreApi.Managers;
+using RocketStoreApi.Services;
 using RocketStoreApi.Storage;
 
 namespace RocketStoreApi
@@ -39,6 +40,7 @@ namespace RocketStoreApi
             services.AddControllers();
 
             // change lifetime of Customers manager to scoped
+            services.AddTransient<IGeoLocationService, PositionStackGeolocationService>();
             services.AddScoped<ICustomersManager, CustomersManager>();
 
             services.AddOpenApiDocument(
