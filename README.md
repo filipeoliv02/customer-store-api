@@ -87,3 +87,5 @@ Stakeholders want to complete the whole solution faster so they want to add more
 Additionally, the initial solution design will not be adequate as it grows to support more scenarios. The technical manager plans to implement a [Clean Architecture](https://www.youtube.com/watch?v=dK4Yb6-LxAk&t=846s) to make it more scalable and easier to mantain in the future.
 
 How would refactor the solution to put in place the Clean Architecture design principles? Or would you purpose something different?
+
+``` An environment variable should be set in order to use the geolocation service. PositionStackApiKey : "valid_key" ```
