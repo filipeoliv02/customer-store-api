@@ -39,6 +39,8 @@ namespace RocketStoreApi.Tests
 
         #region Test Methods
 
+        #region CreateCustomerAsync
+
         /// <summary>
         /// Tests the <see cref="CustomersController.CreateCustomerAsync(Customer)"/> method
         /// to ensure that it requires name and email.
@@ -184,6 +186,10 @@ namespace RocketStoreApi.Tests
             ProblemDetails error = await this.GetResponseContentAsync<ProblemDetails>(httpResponse2).ConfigureAwait(false);
             error.Should().NotBeNull();
             error.Title.Should().Be(ErrorCodes.CustomerAlreadyExists);
+            if (httpResponse1.IsSuccessStatusCode)
+            {
+                await this.fixture.DeleteAsync($"api/customers/{await this.GetResponseContentAsync<Guid?>(httpResponse1).ConfigureAwait(false)}").ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -216,7 +222,232 @@ namespace RocketStoreApi.Tests
             id.Should().NotBeNull();
 
             httpResponse.Headers.Location.Should().NotBeNull();
+
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                await this.fixture.DeleteAsync($"api/customers/{id}").ConfigureAwait(false);
+            }
         }
+
+        #endregion
+
+        #region DeleteCustomerAsync
+
+        /// <summary>
+        /// Tests the <see cref="CustomersController.DeleteCustomerAsync(Guid)"/> method
+        /// to ensure that it deletes a customer.
+        /// </summary>
+        /// <param name="id">The customer identifier.</param>
+        /// <returns>
+        /// The <see cref="Task"/> that represents the asynchronous operation.
+        /// </returns>
+        [Fact]
+        public async Task DeleteSucceedsAsync()
+        {
+            // Arrange
+
+            Customer customer = new Customer()
+            {
+                Name = "My customer",
+                Email = "email@example.com"
+            };
+
+            HttpResponseMessage httpResponse = await this.fixture.PostAsync("api/customers", customer).ConfigureAwait(false);
+            Guid? id = await this.GetResponseContentAsync<Guid?>(httpResponse).ConfigureAwait(false);
+
+            // Act
+
+            httpResponse = await this.fixture.DeleteAsync($"api/customers/{id}").ConfigureAwait(false);
+
+            // Assert
+
+            httpResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        /// <summary>
+        /// Tests the <see cref="CustomersController.DeleteCustomerAsync(Guid)"/> method
+        /// to ensure that it returns not found if the customer does not exist.
+        /// </summary>
+        /// <param name="id">The customer identifier.</param>
+        /// <returns>
+        /// The <see cref="Task"/> that represents the asynchronous operation.
+        /// </returns>
+        [Fact]
+        public async Task DeleteNotFoundAsync()
+        {
+            // Arrange
+
+            // Act
+
+            HttpResponseMessage httpResponse = await this.fixture.DeleteAsync($"api/customers/{Guid.NewGuid()}").ConfigureAwait(false);
+
+            // Assert
+
+            httpResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        }
+
+        #endregion
+
+        #region GetCustomerAsync
+
+        /// <summary>
+        /// Tests the <see cref="CustomersController.GetCustomerAsync(Guid)"/> method.
+        /// </summary>
+        /// <returns>
+        /// The <see cref="Task"/> that represents the asynchronous operation.
+        /// </returns>
+        [Fact]
+        public async Task GetSucceedsAsync()
+        {
+            // Arrange
+
+            Customer customer = new Customer()
+            {
+                Name = "My customer",
+                Email = "mail@example.com"
+            };
+
+            HttpResponseMessage httpResponse = await this.fixture.PostAsync("api/customers", customer).ConfigureAwait(false);
+            Guid? id = await this.GetResponseContentAsync<Guid?>(httpResponse).ConfigureAwait(false);
+
+            // Act
+
+            httpResponse = await this.fixture.GetAsync($"api/customers/{id}").ConfigureAwait(false);
+
+            // Assert
+
+            httpResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            CustomerDto customerDto = await this.GetResponseContentAsync<CustomerDto>(httpResponse).ConfigureAwait(false);
+            customerDto.Should().NotBeNull();
+
+            await this.fixture.DeleteAsync($"api/customers/{id}").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests the <see cref="CustomersController.GetCustomerAsync(Guid)"/> method
+        /// to ensure that it returns not found if the customer does not exist.
+        /// </summary>
+        /// <param name="id">The customer identifier.</param>
+        /// <returns>
+        /// The <see cref="Task"/> that represents the asynchronous operation.
+        /// </returns>
+        [Theory]
+        [InlineData("00000000-0000-0000-0000-000000000000")]
+        [InlineData("11111111-1111-1111-1111-111111111111")]
+        public async Task GetNotFoundAsync(string id)
+        {
+            // Arrange
+
+            // Act
+
+            HttpResponseMessage httpResponse = await this.fixture.GetAsync($"api/customers/{id}").ConfigureAwait(false);
+
+            // Assert
+
+            httpResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        }
+
+        #endregion
+
+        #region GetGeolocationAsync
+
+        /// <summary>
+        /// Tests the <see cref="CustomersController.GetGeolocationAsync(Guid)"/> method.
+        /// </summary>
+        /// <returns>
+        /// The <see cref="Task"/> that represents the asynchronous operation.
+        /// </returns>
+        [Fact]
+        public async Task GetGeolocationSucceedsAsync()
+        {
+            // Arrange
+
+            Customer customer = new Customer()
+            {
+                Name = "My customer",
+                Email = "123@example.com",
+                Address = "Rua do Ouro, Porto, Portugal"
+            };
+
+            HttpResponseMessage httpResponse = await this.fixture.PostAsync("api/customers", customer).ConfigureAwait(false);
+            Guid? id = await this.GetResponseContentAsync<Guid?>(httpResponse).ConfigureAwait(false);
+
+            // Act
+
+            httpResponse = await this.fixture.GetAsync($"api/customers/{id}/geolocation").ConfigureAwait(false);
+
+            // Assert
+
+            httpResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            GeolocationDto geolocationDto = await this.GetResponseContentAsync<GeolocationDto>(httpResponse).ConfigureAwait(false);
+            geolocationDto.Should().NotBeNull();
+
+            await this.fixture.DeleteAsync($"api/customers/{id}").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests the <see cref="CustomersController.GetGeolocationAsync(Guid)"/> method
+        /// to ensure that it returns not found if the customer does not exist.
+        /// </summary>
+        /// <param name="id">The customer identifier.</param>
+        /// <returns>
+        /// The <see cref="Task"/> that represents the asynchronous operation.
+        /// </returns>
+        [Fact]
+        public async Task GetGeolocationNotFoundAsync()
+        {
+            // Arrange
+
+            // Act
+
+            HttpResponseMessage httpResponse = await this.fixture.GetAsync($"api/customers/{Guid.NewGuid()}/geolocation").ConfigureAwait(false);
+
+            // Assert
+
+            httpResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        }
+
+        /// <summary>
+        /// Tests the <see cref="CustomersController.GetGeolocationAsync(Guid)"/> method
+        /// to ensure that it returns not found if the customer does not have an address.
+        /// </summary>
+        /// <param name="id">The customer identifier.</param>
+        /// <returns>
+        /// The <see cref="Task"/> that represents the asynchronous operation.
+        /// </returns>
+        [Fact]
+        public async Task GetGeolocationNoAddressAsync()
+        {
+            // Arrange
+
+            Customer customer = new Customer()
+            {
+                Name = "My customer",
+                Email = "123@test.com"
+            };
+
+            HttpResponseMessage httpResponse = await this.fixture.PostAsync("api/customers", customer).ConfigureAwait(false);
+            Guid? id = await this.GetResponseContentAsync<Guid?>(httpResponse).ConfigureAwait(false);
+
+            // Act
+
+            httpResponse = await this.fixture.GetAsync($"api/customers/{id}/geolocation").ConfigureAwait(false);
+
+            // Assert
+
+            httpResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+            ProblemDetails error = await this.GetResponseContentAsync<ProblemDetails>(httpResponse).ConfigureAwait(false);
+            error.Should().NotBeNull();
+            error.Title.Should().Be(ErrorCodes.CustomerDoesNotHaveAnAddress);
+
+            await this.fixture.DeleteAsync($"api/customers/{id}").ConfigureAwait(false);
+        }
+
+        #endregion
+
+        #region ListCustomerAsync
 
         /// <summary>
         /// Tests the <see cref="CustomersController.ListCustomersAsync(string, string)"/> method
@@ -230,7 +461,7 @@ namespace RocketStoreApi.Tests
         {
             // Arrange
 
-            await this.Create2ValidCustomersAsync().ConfigureAwait(false);
+            (Guid Id1, Guid Id2) ids = await this.Create2ValidCustomersAsync().ConfigureAwait(false);
 
             // Act
 
@@ -243,6 +474,9 @@ namespace RocketStoreApi.Tests
             IEnumerable<CustomerDto> customers = await this.GetResponseContentAsync<IEnumerable<CustomerDto>>(httpResponse).ConfigureAwait(false);
             customers.Should().NotBeNull();
             customers.Should().HaveCount(2);
+
+            await this.fixture.DeleteAsync($"api/customers/{ids.Id1}").ConfigureAwait(false);
+            await this.fixture.DeleteAsync($"api/customers/{ids.Id2}").ConfigureAwait(false);
         }
 
         /// <summary>
@@ -282,7 +516,7 @@ namespace RocketStoreApi.Tests
         {
             // Arrange
 
-            await this.Create2ValidCustomersAsync().ConfigureAwait(false);
+            (Guid Id1, Guid Id2) ids = await this.Create2ValidCustomersAsync().ConfigureAwait(false);
 
             // Act
 
@@ -295,6 +529,9 @@ namespace RocketStoreApi.Tests
             IEnumerable<CustomerDto> customers = await this.GetResponseContentAsync<IEnumerable<CustomerDto>>(httpResponse).ConfigureAwait(false);
             customers.Should().NotBeNull();
             customers.Should().HaveCount(1);
+
+            await this.fixture.DeleteAsync($"api/customers/{ids.Id1}").ConfigureAwait(false);
+            await this.fixture.DeleteAsync($"api/customers/{ids.Id2}").ConfigureAwait(false);
         }
 
         /// <summary>
@@ -309,7 +546,7 @@ namespace RocketStoreApi.Tests
         {
             // Arrange
 
-            await this.Create2ValidCustomersAsync().ConfigureAwait(false);
+            (Guid Id1, Guid Id2) ids = await this.Create2ValidCustomersAsync().ConfigureAwait(false);
 
             // Act
 
@@ -322,13 +559,18 @@ namespace RocketStoreApi.Tests
             IEnumerable<CustomerDto> customers = await this.GetResponseContentAsync<IEnumerable<CustomerDto>>(httpResponse).ConfigureAwait(false);
             customers.Should().NotBeNull();
             customers.Should().HaveCount(1);
+
+            await this.fixture.DeleteAsync($"api/customers/{ids.Id1}").ConfigureAwait(false);
+            await this.fixture.DeleteAsync($"api/customers/{ids.Id2}").ConfigureAwait(false);
         }
+
+        #endregion
 
         #endregion
 
         #region Private Methods
 
-        private async Task Create2ValidCustomersAsync()
+        private async Task<(Guid Id1, Guid Id2)> Create2ValidCustomersAsync()
         {
             Customer customer1 = new Customer()
             {
@@ -342,8 +584,12 @@ namespace RocketStoreApi.Tests
                 Email = "mail2@example.com",
             };
 
-            await this.fixture.PostAsync("api/customers", customer1).ConfigureAwait(false);
-            await this.fixture.PostAsync("api/customers", customer2).ConfigureAwait(false);
+            HttpResponseMessage httpResponse1 = await this.fixture.PostAsync("api/customers", customer1).ConfigureAwait(false);
+            HttpResponseMessage httpResponse2 = await this.fixture.PostAsync("api/customers", customer2).ConfigureAwait(false);
+
+            Guid? id1 = await this.GetResponseContentAsync<Guid?>(httpResponse1).ConfigureAwait(false);
+            Guid? id2 = await this.GetResponseContentAsync<Guid?>(httpResponse2).ConfigureAwait(false);
+            return (id1.Value, id2.Value);
         }
 
         #endregion

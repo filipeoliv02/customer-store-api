@@ -68,6 +68,34 @@ namespace RocketStoreApi.Tests
         #region Public Methods
 
         /// <summary>
+        /// Send a delete request.
+        /// </summary>
+        /// <param name="endpointPath">The endpoint path.</param>
+        /// <returns>
+        /// The <see cref="Task{TResult}"/> that represents the asynchronous operation.
+        /// The <see cref="HttpResponseMessage"/> instance.
+        /// </returns>
+        public Task<HttpResponseMessage> DeleteAsync(string endpointPath)
+        {
+            return this.Client.DeleteAsync(
+                 new Uri($"{this.Server.BaseAddress}{endpointPath}"));
+        }
+
+        /// <summary>
+        /// Send a get request.
+        /// </summary>
+        /// <param name="endpointPath">The endpoint path.</param>
+        /// <returns>
+        /// The <see cref="Task{TResult}"/> that represents the asynchronous operation.
+        /// The <see cref="HttpResponseMessage"/> instance.
+        /// </returns>
+        public Task<HttpResponseMessage> GetAsync(string endpointPath)
+        {
+            return this.Client.GetAsync(
+                 new Uri($"{this.Server.BaseAddress}{endpointPath}"));
+        }
+
+        /// <summary>
         /// Send a post request.
         /// </summary>
         /// <typeparam name="T">The model type.</typeparam>
@@ -92,19 +120,6 @@ namespace RocketStoreApi.Tests
                 .ConfigureAwait(false);
         }
 
-        /// <summary>
-        /// Send a get request.
-        /// </summary>
-        /// <param name="endpointPath">The endpoint path.</param>
-        /// <returns>
-        /// The <see cref="Task{TResult}"/> that represents the asynchronous operation.
-        /// The <see cref="HttpResponseMessage"/> instance.
-        /// </returns>
-        public Task<HttpResponseMessage> GetAsync(string endpointPath)
-        {
-            return this.Client.GetAsync(
-                 new Uri($"{this.Server.BaseAddress}{endpointPath}"));
-        }
 
         /// <inheritdoc />
         public void Dispose()
