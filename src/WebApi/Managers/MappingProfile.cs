@@ -26,6 +26,8 @@ namespace RocketStoreApi.Managers
                     });
 
             this.CreateMap<Entities.Customer, Models.CustomerDto>();
+
+            this.CreateMap<Entities.Customer, Models.Customer>();
         }
 
         #endregion

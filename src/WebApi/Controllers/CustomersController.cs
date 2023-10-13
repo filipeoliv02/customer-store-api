@@ -66,14 +66,14 @@ namespace RocketStoreApi.Controllers
         /// <summary>
         /// Lists all customers.
         /// </summary>
-        /// <returns>
         /// <param name="name">The name of the customers.</param>
         /// <param name="email">The email of the customer(since the email is unique we can only get a customer,if there is a match).</param>
+        /// <returns>
         /// The list of all customers.
         /// </returns>
         [HttpGet("api/customers")]
         [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(Customer[]), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(CustomerDto[]), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> ListCustomersAsync([FromQuery] string name = null, [FromQuery] string email = null)
         {
             Result<List<CustomerDto>> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
@@ -92,6 +92,128 @@ namespace RocketStoreApi.Controllers
 
             return this.Ok(result.Value);
         }
+
+        /// <summary>
+        /// Gets the specified customer.
+        /// </summary>
+        /// <param name="customerId">The customer identifier.</param>
+        /// <returns>
+        /// The customer.
+        /// </returns>
+        [HttpGet("api/customers/{customerId}")]
+        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(Customer), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetCustomerAsync(string customerId)
+        {
+            Result<Customer> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
+                .GetCustomerAsync(customerId).ConfigureAwait(false);
+
+            if (result.FailedWith(ErrorCodes.CustomerDoesNotExist))
+            {
+                return this.NotFound(
+                    new ProblemDetails()
+                    {
+                        Status = (int)HttpStatusCode.NotFound,
+                        Title = result.ErrorCode,
+                        Detail = result.ErrorDescription
+                    });
+            }
+            else if (result.Failed)
+            {
+                return this.BadRequest(
+                    new ProblemDetails()
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Title = result.ErrorCode,
+                        Detail = result.ErrorDescription
+                    });
+            }
+
+            return this.Ok(result.Value);
+        }
+
+        /// <summary>
+        /// Deletes the specified customer.
+        /// </summary>
+        /// <param name="customerId">The customer identifier.</param>
+        /// <returns>
+        /// The result of the deletion.
+        /// </returns>
+        [HttpDelete("api/customers/{customerId}")]
+        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
+        public async Task<IActionResult> DeleteCustomerAsync(string customerId)
+        {
+            // Result requires a type, but we don't need it here.
+            Result<bool> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
+                .DeleteCustomerAsync(customerId).ConfigureAwait(false);
+
+            if (result.FailedWith(ErrorCodes.CustomerDoesNotExist))
+            {
+                return this.NotFound(
+                    new ProblemDetails()
+                    {
+                        Status = (int)HttpStatusCode.NotFound,
+                        Title = result.ErrorCode,
+                        Detail = result.ErrorDescription
+                    });
+            }
+            else if (result.Failed)
+            {
+                return this.BadRequest(
+                    new ProblemDetails()
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Title = result.ErrorCode,
+                        Detail = result.ErrorDescription
+                    });
+            }
+
+            return this.NoContent();
+        }
+
+        /// <summary>
+        /// Get the geolocation information about an existing customer.
+        /// </summary>
+        /// <param name="customerId">The customer identifier.</param>
+        /// <returns>
+        /// The geolocation information.
+        /// </returns>
+        [HttpGet("api/customers/{customerId}/geolocation")]
+        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(GeolocationData), (int)HttpStatusCode.OK)]
+        public async Task<IActionResult> GetGeolocationAsync(string customerId)
+        {
+            Result<GeolocationData> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
+                .GetCustomerGeolocationAsync(customerId).ConfigureAwait(false);
+
+            if (result.FailedWith(ErrorCodes.CustomerDoesNotExist) || result.FailedWith(ErrorCodes.CustomerDoesNotHaveAnAddress))
+            {
+                return this.NotFound(
+                    new ProblemDetails()
+                    {
+                        Status = (int)HttpStatusCode.NotFound,
+                        Title = result.ErrorCode,
+                        Detail = result.ErrorDescription
+                    });
+            }
+            else if (result.Failed)
+            {
+                return this.BadRequest(
+                    new ProblemDetails()
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Title = result.ErrorCode,
+                        Detail = result.ErrorDescription
+                    });
+            }
+
+            return this.Ok(result.Value);
+        }
+
         #endregion
 
         #region Private Methods
