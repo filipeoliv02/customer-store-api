@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using CustomerStoreApi.Entities;
 using Microsoft.EntityFrameworkCore;
-using RocketStoreApi.Entities;
 
-namespace RocketStoreApi.Storage
+namespace CustomerStoreApi.Storage
 {
     /// <summary>
     /// Defines the application database context.

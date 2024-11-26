@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace RocketStoreApi.Tests
+namespace CustomerStoreApi.Tests
 {
     /// <summary>
     /// Defines the base class for test classes.

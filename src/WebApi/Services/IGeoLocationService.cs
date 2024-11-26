@@ -1,8 +1,8 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using RocketStoreApi.Models;
+using CustomerStoreApi.Models;
 
-namespace RocketStoreApi.Services
+namespace CustomerStoreApi.Services
 {
     /// <summary>
     /// Defines the interface of the geolocation service.

@@ -1,4 +1,4 @@
-﻿namespace RocketStoreApi.Entities
+﻿namespace CustomerStoreApi.Entities
 {
     /// <summary>
     /// Defines a customer.

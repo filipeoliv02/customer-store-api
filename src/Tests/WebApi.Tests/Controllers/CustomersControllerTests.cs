@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using CustomerStoreApi.Controllers;
+using CustomerStoreApi.Managers;
+using CustomerStoreApi.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using RocketStoreApi.Controllers;
-using RocketStoreApi.Managers;
-using RocketStoreApi.Models;
 using Xunit;
 
-namespace RocketStoreApi.Tests
+namespace CustomerStoreApi.Tests
 {
     /// <summary>
     /// Provides integration tests for the <see cref="CustomersController"/> type.

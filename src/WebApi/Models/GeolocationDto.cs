@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace RocketStoreApi.Models
+namespace CustomerStoreApi.Models
 {
     /// <summary>
     /// Defines the geolocation dto.

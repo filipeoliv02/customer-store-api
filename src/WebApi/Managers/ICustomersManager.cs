@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using RocketStoreApi.Models;
+using CustomerStoreApi.Models;
 
-namespace RocketStoreApi.Managers
+namespace CustomerStoreApi.Managers
 {
     /// <summary>
     /// Defines the interface of the customers manager.
@@ -33,7 +33,7 @@ namespace RocketStoreApi.Managers
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// The <see cref="Task{TResult}" /> that represents the asynchronous operation.
-        /// The <see cref="Result" /> that describes the result.
+        /// The <see cref="Result{T}" /> that describes the result.
         /// </returns>
         Task<Result<bool>> DeleteCustomerAsync(string customerId, CancellationToken cancellationToken = default);
 

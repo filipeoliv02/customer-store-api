@@ -1,4 +1,4 @@
-﻿namespace RocketStoreApi.Managers
+﻿namespace CustomerStoreApi.Managers
 {
     /// <summary>
     /// Defines constants that describe error codes.

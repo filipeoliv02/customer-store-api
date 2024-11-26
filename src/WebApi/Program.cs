@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace RocketStoreApi
+namespace CustomerStoreApi
 {
     /// <summary>
     /// Defines the entry point of the application.

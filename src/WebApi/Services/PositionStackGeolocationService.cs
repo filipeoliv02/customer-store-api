@@ -3,10 +3,10 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using CustomerStoreApi.Models;
 using Microsoft.Extensions.Logging;
-using RocketStoreApi.Models;
 
-namespace RocketStoreApi.Services
+namespace CustomerStoreApi.Services
 {
     /// <summary>
     /// Defines the implementation of <see cref="IGeoLocationService"/> using PositionStack-API.

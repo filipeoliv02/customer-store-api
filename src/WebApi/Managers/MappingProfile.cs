@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using AutoMapper;
 
-namespace RocketStoreApi.Managers
+namespace CustomerStoreApi.Managers
 {
     /// <summary>
     /// Defines the mapping profile used by the application.
