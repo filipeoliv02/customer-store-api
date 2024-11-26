@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace RocketStoreApi.Models
+namespace CustomerStoreApi.Models
 {
     /// <summary>
     /// Defines a customer.

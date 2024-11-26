@@ -5,13 +5,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
+using CustomerStoreApi.Models;
+using CustomerStoreApi.Services;
+using CustomerStoreApi.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using RocketStoreApi.Models;
-using RocketStoreApi.Services;
-using RocketStoreApi.Storage;
 
-namespace RocketStoreApi.Managers
+namespace CustomerStoreApi.Managers
 {
     /// <summary>
     /// Defines the default implementation of <see cref="ICustomersManager"/>.

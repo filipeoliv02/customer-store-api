@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
-        <AssemblyName>RocketStoreApi.Tests</AssemblyName>
-        <RootNamespace>RocketStoreApi.Tests</RootNamespace>
+        <AssemblyName>CustomerStoreApi.Tests</AssemblyName>
+        <RootNamespace>CustomerStoreApi.Tests</RootNamespace>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 

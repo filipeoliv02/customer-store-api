@@ -1,14 +1,12 @@
-﻿using AutoMapper;
+﻿using CustomerStoreApi.Managers;
+using CustomerStoreApi.Services;
+using CustomerStoreApi.Storage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using RocketStoreApi.Managers;
-using RocketStoreApi.Services;
-using RocketStoreApi.Storage;
 
-namespace RocketStoreApi
+namespace CustomerStoreApi
 {
     /// <summary>
     /// Defines the startup of the application.
@@ -35,7 +33,7 @@ namespace RocketStoreApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseInMemoryDatabase("RocketStoreApiDb"));
+                options.UseInMemoryDatabase("CustomerStoreApiDb"));
 
             services.AddControllers();
 
@@ -47,8 +45,8 @@ namespace RocketStoreApi
                 (options) =>
                 {
                     options.DocumentName = "Version 1";
-                    options.Title = "RocketStore API";
-                    options.Description = "REST API for the RocketStore Web Application";
+                    options.Title = "CustomerStore API";
+                    options.Description = "REST API for the CustomerStore Web Application";
                 });
 
             services

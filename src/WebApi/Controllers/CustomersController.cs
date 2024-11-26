@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using CustomerStoreApi.Managers;
+using CustomerStoreApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using RocketStoreApi.Managers;
-using RocketStoreApi.Models;
 
-namespace RocketStoreApi.Controllers
+namespace CustomerStoreApi.Controllers
 {
     /// <summary>
     /// Defines the customers controller.

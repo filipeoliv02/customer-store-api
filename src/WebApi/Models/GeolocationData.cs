@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace RocketStoreApi.Models
+namespace CustomerStoreApi.Models
 {
     /// <summary>
     /// JSON data returned by the PositionStack API.

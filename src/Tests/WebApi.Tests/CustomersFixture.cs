@@ -4,12 +4,12 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using CustomerStoreApi.Controllers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
-using RocketStoreApi.Controllers;
 
-namespace RocketStoreApi.Tests
+namespace CustomerStoreApi.Tests
 {
     /// <summary>
     /// Defines a test fixture used to test the <see cref="CustomersController"/>.

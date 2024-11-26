@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace RocketStoreApi.Managers
+namespace CustomerStoreApi.Managers
 {
     /// <summary>
     /// Describes the result of an operation.

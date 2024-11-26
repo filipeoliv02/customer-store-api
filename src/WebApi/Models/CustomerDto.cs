@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RocketStoreApi.Models
+namespace CustomerStoreApi.Models
 {
     /// <summary>
     /// Defines a customer dto.
