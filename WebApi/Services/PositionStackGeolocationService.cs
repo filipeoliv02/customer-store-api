@@ -1,137 +1,157 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
-using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CustomerStoreApi.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-namespace CustomerStoreApi.Services
+namespace CustomerStoreApi.Services;
+
+/// <summary>
+/// Defines the implementation of <see cref="IGeoLocationService"/> using the
+/// <see href="https://positionstack.com/">PositionStack</see> forward geocoding API.
+/// </summary>
+/// <remarks>
+/// This is a typed HTTP client: the <see cref="HttpClient"/> instance is owned and pooled by
+/// <see cref="IHttpClientFactory"/>, so this class must not dispose it.
+/// The API key is sent as a query string parameter (as required by PositionStack) and is never logged.
+/// </remarks>
+public sealed partial class PositionStackGeolocationService : IGeoLocationService
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly HttpClient httpClient;
+    private readonly IOptions<PositionStackOptions> options;
+    private readonly ILogger<PositionStackGeolocationService> logger;
+
     /// <summary>
-    /// Defines the implementation of <see cref="IGeoLocationService"/> using PositionStack-API.
+    /// Initializes a new instance of the <see cref="PositionStackGeolocationService"/> class.
     /// </summary>
-    /// <seealso cref="IDisposable" />
-    public sealed class PositionStackGeolocationService : IGeoLocationService, IDisposable
+    /// <param name="httpClient">The HTTP client, configured with the PositionStack base address.</param>
+    /// <param name="options">The PositionStack options.</param>
+    /// <param name="logger">The logger.</param>
+    public PositionStackGeolocationService(
+        HttpClient httpClient,
+        IOptions<PositionStackOptions> options,
+        ILogger<PositionStackGeolocationService> logger)
     {
-        #region Fields
+        this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        this.options = options ?? throw new ArgumentNullException(nameof(options));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
-        private bool disposed;
+    /// <inheritdoc/>
+    public async Task<GeolocationResponse?> GetGeolocationAsync(string address, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(address);
 
-        #endregion
+        string? accessKey = this.options.Value.ApiKey;
 
-        #region Private Properties
-
-        private HttpClient HttpClient
+        if (string.IsNullOrWhiteSpace(accessKey))
         {
-            get;
-            set;
-        }
-
-        private ILogger Logger
-        {
-            get;
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PositionStackGeolocationService"/> class.
-        /// </summary>
-        /// <param name="logger">The logger.</param>
-        public PositionStackGeolocationService(ILogger<PositionStackGeolocationService> logger)
-        {
-            this.HttpClient = new HttpClient
-            {
-                BaseAddress = new Uri("http://api.positionstack.com")
-            };
-            this.Logger = logger;
-        }
-
-        /// <inheritdoc/>
-        public async Task<GeolocationData> GetGeolocationAsync(string address, CancellationToken cancellationToken)
-        {
-            try
-            {
-                // Fetch the access key from an environment variable
-                string accessKey = Environment.GetEnvironmentVariable("PositionStackApiKey");
-
-                if (string.IsNullOrEmpty(accessKey))
-                {
-                    this.Logger.LogError("The PositionStack API key is not set.");
-                    return null;
-                }
-
-                string queryParams = $"access_key={accessKey}" +
-                                 $"&query={Uri.EscapeDataString(address)}";
-
-                string requestUri = $"/v1/forward?{queryParams}";
-
-                HttpResponseMessage response = await this.HttpClient.GetAsync(requestUri, cancellationToken)
-                                                                    .ConfigureAwait(false);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    GeolocationData geolocationData = await response.Content.ReadFromJsonAsync<GeolocationData>(cancellationToken: cancellationToken)
-                                                                  .ConfigureAwait(false);
-
-                    if (geolocationData != null && geolocationData.Data.Count > 0)
-                    {
-                        // append address to the geolocation data
-                        foreach (GeolocationDto item in geolocationData.Data)
-                        {
-                            item.Address = address;
-                        }
-
-                        return geolocationData;
-                    }
-                    else
-                    {
-                        this.Logger.LogError($"The PositionStack API returned an error: {response.StatusCode} - {response.ReasonPhrase}");
-                    }
-                }
-            }
-            catch (ArgumentNullException)
-            {
-                this.Logger.LogError("The PositionStack API key is not set.");
-            }
-            catch (HttpRequestException ex)
-            {
-                this.Logger.LogError(ex, "The PositionStack API request failed.");
-            }
-            catch (TaskCanceledException)
-            {
-                this.Logger.LogWarning("The PositionStack API request was cancelled.");
-            }
-
+            this.LogApiKeyMissing();
             return null;
         }
 
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            this.Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+        Uri requestUri = new(
+            $"forward?access_key={Uri.EscapeDataString(accessKey)}&query={Uri.EscapeDataString(address)}",
+            UriKind.Relative);
 
-        #region Private Methods
-
-        private void Dispose(bool disposing)
+        try
         {
-            if (!this.disposed)
+            using HttpResponseMessage response = await this.httpClient
+                .GetAsync(requestUri, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
             {
-                if (disposing)
-                {
-                    if (this.HttpClient != null)
-                    {
-                        this.HttpClient.Dispose();
-                    }
-                }
-
-                this.disposed = true;
+                this.LogUnsuccessfulResponse(response.StatusCode);
+                return null;
             }
+
+            using JsonDocument document = await JsonDocument
+                .ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+
+            List<GeolocationDto>? items = ReadLocations(document.RootElement);
+
+            if (items is null || items.Count == 0)
+            {
+                this.LogNoResults(TryGetErrorCode(document.RootElement));
+                return null;
+            }
+
+            foreach (GeolocationDto item in items)
+            {
+                item.Address = address;
+            }
+
+            return new GeolocationResponse { Data = items };
+        }
+        catch (HttpRequestException ex)
+        {
+            this.LogRequestFailed(ex);
+        }
+        catch (JsonException ex)
+        {
+            this.LogInvalidResponse(ex);
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            this.LogTimeout();
         }
 
-        #endregion
+        return null;
     }
+
+    /// <summary>
+    /// Reads the location items from a PositionStack response.
+    /// Supports both <c>{"data": [...]}</c> and <c>{"data": {"results": [...]}}</c> shapes.
+    /// </summary>
+    private static List<GeolocationDto>? ReadLocations(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("data", out JsonElement data))
+        {
+            return null;
+        }
+
+        if (data.ValueKind == JsonValueKind.Object && data.TryGetProperty("results", out JsonElement results))
+        {
+            data = results;
+        }
+
+        return data.ValueKind == JsonValueKind.Array
+            ? data.Deserialize<List<GeolocationDto>>(SerializerOptions)
+            : null;
+    }
+
+    private static string? TryGetErrorCode(JsonElement root) =>
+        root.ValueKind == JsonValueKind.Object
+        && root.TryGetProperty("error", out JsonElement error)
+        && error.ValueKind == JsonValueKind.Object
+        && error.TryGetProperty("code", out JsonElement code)
+            ? code.ToString()
+            : null;
+
+    [LoggerMessage(EventId = 100, Level = LogLevel.Error, Message = "The PositionStack API key is not configured. Set the 'PositionStackApiKey' environment variable.")]
+    private partial void LogApiKeyMissing();
+
+    [LoggerMessage(EventId = 101, Level = LogLevel.Warning, Message = "The PositionStack API returned status code {StatusCode}.")]
+    private partial void LogUnsuccessfulResponse(HttpStatusCode statusCode);
+
+    [LoggerMessage(EventId = 102, Level = LogLevel.Warning, Message = "The PositionStack API returned no results (error code: {ErrorCode}).")]
+    private partial void LogNoResults(string? errorCode);
+
+    [LoggerMessage(EventId = 103, Level = LogLevel.Error, Message = "The PositionStack API request failed.")]
+    private partial void LogRequestFailed(Exception exception);
+
+    [LoggerMessage(EventId = 104, Level = LogLevel.Error, Message = "The PositionStack API returned an invalid response.")]
+    private partial void LogInvalidResponse(Exception exception);
+
+    [LoggerMessage(EventId = 105, Level = LogLevel.Warning, Message = "The PositionStack API request timed out.")]
+    private partial void LogTimeout();
 }

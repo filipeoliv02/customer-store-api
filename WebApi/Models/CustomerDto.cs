@@ -1,25 +1,11 @@
 ﻿using System;
 
-namespace CustomerStoreApi.Models
-{
-    /// <summary>
-    /// Defines a customer dto.
-    /// </summary>
-    public class CustomerDto
-    {
-        /// <summary>
-        /// Gets or sets the id of the customer.
-        /// </summary>
-        public Guid Id { get; set; }
+namespace CustomerStoreApi.Models;
 
-        /// <summary>
-        /// Gets or sets the name of the customer.
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Gets or sets the email of the customer.
-        /// </summary>
-        public string Email { get; set; }
-    }
-}
+/// <summary>
+/// Defines the summary of a customer, as returned when listing customers.
+/// </summary>
+/// <param name="Id">The customer identifier.</param>
+/// <param name="Name">The customer name.</param>
+/// <param name="Email">The customer email address.</param>
+public sealed record CustomerDto(Guid Id, string Name, string Email);

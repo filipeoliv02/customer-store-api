@@ -1,235 +1,147 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using CustomerStoreApi.Managers;
 using CustomerStoreApi.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 
-namespace CustomerStoreApi.Controllers
+namespace CustomerStoreApi.Controllers;
+
+/// <summary>
+/// Defines the customers controller.
+/// This controller provides actions on customers.
+/// </summary>
+[ApiController]
+[Route("api/customers")]
+[Produces("application/json")]
+public sealed class CustomersController : ControllerBase
 {
+    private const string GetCustomerRouteName = "GetCustomer";
+
+    private readonly ICustomersManager customersManager;
+
     /// <summary>
-    /// Defines the customers controller.
-    /// This controller provides actions on customers.
+    /// Initializes a new instance of the <see cref="CustomersController"/> class.
     /// </summary>
-    [ControllerName("Customers")]
-    [ApiController]
-    public partial class CustomersController : ControllerBase
+    /// <param name="customersManager">The customers manager.</param>
+    public CustomersController(ICustomersManager customersManager)
     {
-        // Ignore Spelling: api
+        this.customersManager = customersManager ?? throw new ArgumentNullException(nameof(customersManager));
+    }
 
-        #region Public Methods
+    /// <summary>
+    /// Creates the specified customer.
+    /// </summary>
+    /// <param name="customer">The customer that should be created.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The new customer identifier.</returns>
+    [HttpPost]
+    [ProducesResponseType<Guid>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<Guid>> CreateCustomerAsync(CreateCustomerRequest customer, CancellationToken cancellationToken)
+    {
+        Result<Guid> result = await this.customersManager
+            .CreateCustomerAsync(customer, cancellationToken)
+            .ConfigureAwait(false);
 
-        /// <summary>
-        /// Creates the specified customer.
-        /// </summary>
-        /// <param name="customer">The customer that should be created.</param>
-        /// <returns>
-        /// The new customer identifier.
-        /// </returns>
-        [HttpPost("api/customers")]
-        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.Conflict)]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> CreateCustomerAsync(Customer customer)
+        if (result.Failed)
         {
-            Result<Guid> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
-                .CreateCustomerAsync(customer).ConfigureAwait(false);
-
-            if (result.FailedWith(ErrorCodes.CustomerAlreadyExists))
-            {
-                return this.Conflict(
-                    new ProblemDetails()
-                    {
-                        Status = (int)HttpStatusCode.Conflict,
-                        Title = result.ErrorCode,
-                        Detail = result.ErrorDescription
-                    });
-            }
-            else if (result.Failed)
-            {
-                return this.BadRequest(
-                    new ProblemDetails()
-                    {
-                        Status = (int)HttpStatusCode.BadRequest,
-                        Title = result.ErrorCode,
-                        Detail = result.ErrorDescription
-                    });
-            }
-
-            return this.Created(
-                this.GetUri("customers", result.Value),
-                result.Value);
+            return this.ToProblem(result);
         }
 
-        /// <summary>
-        /// Deletes the specified customer.
-        /// </summary>
-        /// <param name="customerId">The customer identifier.</param>
-        /// <returns>
-        /// The result of the deletion.
-        /// </returns>
-        [HttpDelete("api/customers/{customerId}")]
-        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.NotFound)]
-        [ProducesResponseType((int)HttpStatusCode.NoContent)]
-        public async Task<IActionResult> DeleteCustomerAsync(string customerId)
+        return this.CreatedAtRoute(GetCustomerRouteName, new { customerId = result.Value }, result.Value);
+    }
+
+    /// <summary>
+    /// Deletes the specified customer.
+    /// </summary>
+    /// <param name="customerId">The customer identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>No content when the customer was deleted.</returns>
+    [HttpDelete("{customerId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteCustomerAsync(Guid customerId, CancellationToken cancellationToken)
+    {
+        Result<bool> result = await this.customersManager
+            .DeleteCustomerAsync(customerId, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.Failed ? this.ToProblem(result) : this.NoContent();
+    }
+
+    /// <summary>
+    /// Gets the specified customer.
+    /// </summary>
+    /// <param name="customerId">The customer identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>All the information available for the customer.</returns>
+    [HttpGet("{customerId:guid}", Name = GetCustomerRouteName)]
+    [ProducesResponseType<CustomerDetailsDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CustomerDetailsDto>> GetCustomerAsync(Guid customerId, CancellationToken cancellationToken)
+    {
+        Result<CustomerDetailsDto> result = await this.customersManager
+            .GetCustomerAsync(customerId, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.Failed ? this.ToProblem(result) : result.Value;
+    }
+
+    /// <summary>
+    /// Gets the geolocation information about the address of an existing customer.
+    /// </summary>
+    /// <param name="customerId">The customer identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The geolocation information.</returns>
+    [HttpGet("{customerId:guid}/geolocation")]
+    [ProducesResponseType<GeolocationResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<GeolocationResponse>> GetGeolocationAsync(Guid customerId, CancellationToken cancellationToken)
+    {
+        Result<GeolocationResponse> result = await this.customersManager
+            .GetCustomerGeolocationAsync(customerId, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.Failed ? this.ToProblem(result) : result.Value;
+    }
+
+    /// <summary>
+    /// Lists the customers, optionally filtered by name and/or email (case-insensitive exact match).
+    /// </summary>
+    /// <param name="name">The optional name filter.</param>
+    /// <param name="email">The optional email filter.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The list of customers.</returns>
+    [HttpGet]
+    [ProducesResponseType<IReadOnlyList<CustomerDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<CustomerDto>>> ListCustomersAsync(
+        [FromQuery] string? name,
+        [FromQuery] string? email,
+        CancellationToken cancellationToken)
+    {
+        Result<IReadOnlyList<CustomerDto>> result = await this.customersManager
+            .ListCustomersAsync(name, email, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result.Failed ? this.ToProblem(result) : this.Ok(result.Value);
+    }
+
+    private ObjectResult ToProblem<T>(Result<T> result)
+    {
+        int statusCode = result.ErrorCode switch
         {
-            // Result requires a type, but we don't need it here.
-            Result<bool> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
-                .DeleteCustomerAsync(customerId).ConfigureAwait(false);
+            ErrorCodes.CustomerAlreadyExists => StatusCodes.Status409Conflict,
+            ErrorCodes.CustomerDoesNotExist => StatusCodes.Status404NotFound,
+            ErrorCodes.CustomerDoesNotHaveAnAddress => StatusCodes.Status404NotFound,
+            ErrorCodes.CouldNotGetGeolocation => StatusCodes.Status502BadGateway,
+            _ => StatusCodes.Status400BadRequest,
+        };
 
-            if (result.FailedWith(ErrorCodes.CustomerDoesNotExist))
-            {
-                return this.NotFound(
-                    new ProblemDetails()
-                    {
-                        Status = (int)HttpStatusCode.NotFound,
-                        Title = result.ErrorCode,
-                        Detail = result.ErrorDescription
-                    });
-            }
-            else if (result.Failed)
-            {
-                return this.BadRequest(
-                    new ProblemDetails()
-                    {
-                        Status = (int)HttpStatusCode.BadRequest,
-                        Title = result.ErrorCode,
-                        Detail = result.ErrorDescription
-                    });
-            }
-
-            return this.NoContent();
-        }
-
-        /// <summary>
-        /// Gets the specified customer.
-        /// </summary>
-        /// <param name="customerId">The customer identifier.</param>
-        /// <returns>
-        /// The customer.
-        /// </returns>
-        [HttpGet("api/customers/{customerId}")]
-        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.NotFound)]
-        [ProducesResponseType(typeof(Customer), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> GetCustomerAsync(string customerId)
-        {
-            Result<Customer> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
-                .GetCustomerAsync(customerId).ConfigureAwait(false);
-
-            if (result.FailedWith(ErrorCodes.CustomerDoesNotExist))
-            {
-                return this.NotFound(
-                    new ProblemDetails()
-                    {
-                        Status = (int)HttpStatusCode.NotFound,
-                        Title = result.ErrorCode,
-                        Detail = result.ErrorDescription
-                    });
-            }
-            else if (result.Failed)
-            {
-                return this.BadRequest(
-                    new ProblemDetails()
-                    {
-                        Status = (int)HttpStatusCode.BadRequest,
-                        Title = result.ErrorCode,
-                        Detail = result.ErrorDescription
-                    });
-            }
-
-            return this.Ok(result.Value);
-        }
-
-        /// <summary>
-        /// Get the geolocation information about an existing customer.
-        /// </summary>
-        /// <param name="customerId">The customer identifier.</param>
-        /// <returns>
-        /// The geolocation information.
-        /// </returns>
-        [HttpGet("api/customers/{customerId}/geolocation")]
-        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.NotFound)]
-        [ProducesResponseType(typeof(GeolocationData), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> GetGeolocationAsync(string customerId)
-        {
-            Result<GeolocationData> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
-                .GetCustomerGeolocationAsync(customerId).ConfigureAwait(false);
-
-            if (result.FailedWith(ErrorCodes.CustomerDoesNotExist) || result.FailedWith(ErrorCodes.CustomerDoesNotHaveAnAddress))
-            {
-                return this.NotFound(
-                    new ProblemDetails()
-                    {
-                        Status = (int)HttpStatusCode.NotFound,
-                        Title = result.ErrorCode,
-                        Detail = result.ErrorDescription
-                    });
-            }
-            else if (result.Failed)
-            {
-                return this.BadRequest(
-                    new ProblemDetails()
-                    {
-                        Status = (int)HttpStatusCode.BadRequest,
-                        Title = result.ErrorCode,
-                        Detail = result.ErrorDescription
-                    });
-            }
-
-            return this.Ok(result.Value);
-        }
-
-        /// <summary>
-        /// Lists all customers.
-        /// </summary>
-        /// <param name="name">The name of the customers.</param>
-        /// <param name="email">The email of the customer(since the email is unique we can only get a customer,if there is a match).</param>
-        /// <returns>
-        /// The list of all customers.
-        /// </returns>
-        [HttpGet("api/customers")]
-        [ProducesResponseType(typeof(ProblemDetails), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(CustomerDto[]), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> ListCustomersAsync([FromQuery] string name = null, [FromQuery] string email = null)
-        {
-            Result<List<CustomerDto>> result = await this.HttpContext.RequestServices.GetRequiredService<ICustomersManager>()
-                .ListCustomersAsync(name, email).ConfigureAwait(false);
-
-            if (result.Failed)
-            {
-                return this.BadRequest(
-                    new ProblemDetails()
-                    {
-                        Status = (int)HttpStatusCode.BadRequest,
-                        Title = result.ErrorCode,
-                        Detail = result.ErrorDescription
-                    });
-            }
-
-            return this.Ok(result.Value);
-        }
-
-        #endregion
-
-        #region Private Methods
-
-        private Uri GetUri(params object[] parameters)
-        {
-            string result = $"{this.Request.Scheme}://{this.Request.Host}{this.Request.PathBase}";
-
-            foreach (object pathParam in parameters)
-            {
-                result = $"{result}/{pathParam}";
-            }
-
-            return new Uri(result);
-        }
-
-        #endregion
+        return this.Problem(detail: result.ErrorDescription, statusCode: statusCode, title: result.ErrorCode);
     }
 }

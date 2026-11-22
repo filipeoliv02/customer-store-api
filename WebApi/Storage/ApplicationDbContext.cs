@@ -1,55 +1,42 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using CustomerStoreApi.Entities;
+﻿using CustomerStoreApi.Entities;
+using CustomerStoreApi.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CustomerStoreApi.Storage
+namespace CustomerStoreApi.Storage;
+
+/// <summary>
+/// Defines the application database context.
+/// </summary>
+/// <seealso cref="DbContext" />
+internal sealed class ApplicationDbContext : DbContext
 {
     /// <summary>
-    /// Defines the application database context.
+    /// Initializes a new instance of the <see cref="ApplicationDbContext"/> class.
     /// </summary>
-    /// <seealso cref="Microsoft.EntityFrameworkCore.DbContext" />
-    [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Created via dependency injection.")]
-    internal partial class ApplicationDbContext : DbContext
+    /// <param name="options">The database context options.</param>
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
     {
-        #region Public Properties
+    }
 
-        /// <summary>
-        /// Gets or sets the customers database set.
-        /// </summary>
-        public DbSet<Customer> Customers { get; set; }
+    /// <summary>
+    /// Gets the customers database set.
+    /// </summary>
+    public DbSet<Customer> Customers => this.Set<Customer>();
 
-        #endregion
+    /// <inheritdoc/>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
 
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ApplicationDbContext"/> class.
-        /// </summary>
-        /// <param name="context">The database context.</param>
-        public ApplicationDbContext(DbContextOptions context)
-            : base(context)
+        modelBuilder.Entity<Customer>(customer =>
         {
-        }
-
-        #endregion
-
-        #region Protected Methods
-
-        /// <inheritdoc/>
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-
-            // Customers
-
-            modelBuilder.Entity<Customer>().Property(x => x.Id);
-            modelBuilder.Entity<Customer>().Property(t => t.Name).HasMaxLength(200).IsRequired();
-            modelBuilder.Entity<Customer>().Property(t => t.Email).HasMaxLength(200).IsRequired();
-            modelBuilder.Entity<Customer>().Property(t => t.Address).HasMaxLength(200);
-            modelBuilder.Entity<Customer>().Property(t => t.VatNumber).HasMaxLength(9);
-            modelBuilder.Entity<Customer>().HasIndex(c => c.Email).IsUnique();
-        }
-
-        #endregion
+            customer.HasKey(c => c.Id);
+            customer.Property(c => c.Name).HasMaxLength(CreateCustomerRequest.MaxFieldLength).IsRequired();
+            customer.Property(c => c.Email).HasMaxLength(CreateCustomerRequest.MaxFieldLength).IsRequired();
+            customer.Property(c => c.Address).HasMaxLength(CreateCustomerRequest.MaxFieldLength);
+            customer.Property(c => c.VatNumber).HasMaxLength(9);
+            customer.HasIndex(c => c.Email).IsUnique();
+        });
     }
 }

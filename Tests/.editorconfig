@@ -1,0 +1,7 @@
+# Test-specific overrides of the global analyzer configuration.
+
+[*.cs]
+
+# xUnit recommends NOT using ConfigureAwait(false) in test methods (xUnit1030),
+# so the library-oriented CA2007 rule is disabled for test code.
+dotnet_diagnostic.CA2007.severity = none

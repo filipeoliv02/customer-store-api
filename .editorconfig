@@ -17,6 +17,10 @@ csharp_style_var_for_built_in_types = false
 csharp_style_var_when_type_is_apparent = false
 csharp_style_var_elsewhere = false
 
+# namespace declarations
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_diagnostic.IDE0161.severity = warning
+
 # new() implicit object creation
 csharp_style_implicit_object_creation_when_type_is_apparent = false
 
@@ -83,7 +87,7 @@ dotnet_diagnostic.CA1010.severity = suggestion
 dotnet_diagnostic.CA1012.severity = warning
 dotnet_diagnostic.CA1014.severity = none
 dotnet_diagnostic.CA1016.severity = error
-dotnet_diagnostic.CA1017.severity = warning
+dotnet_diagnostic.CA1017.severity = none # COM visibility is irrelevant for ASP.NET Core apps
 dotnet_diagnostic.CA1018.severity = error
 dotnet_diagnostic.CA1019.severity = warning
 dotnet_diagnostic.CA1021.severity = suggestion
@@ -439,7 +443,7 @@ dotnet_diagnostic.SA1408.severity = error
 dotnet_diagnostic.SA1409.severity = warning
 dotnet_diagnostic.SA1410.severity = error
 dotnet_diagnostic.SA1411.severity = error
-dotnet_diagnostic.SA1412.severity = warning
+dotnet_diagnostic.SA1412.severity = none # UTF-8 without BOM is the modern default
 dotnet_diagnostic.SA1413.severity = none
 dotnet_diagnostic.SA1500.severity = error
 dotnet_diagnostic.SA1501.severity = error

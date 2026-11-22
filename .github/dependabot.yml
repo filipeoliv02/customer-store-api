@@ -1,0 +1,41 @@
+version: 2
+
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      analyzers:
+        patterns:
+          - "AsyncFixer"
+          - "Microsoft.VisualStudio.Threading.Analyzers"
+          - "StyleCop.Analyzers"
+      aspnetcore-efcore:
+        patterns:
+          - "Microsoft.AspNetCore.*"
+          - "Microsoft.EntityFrameworkCore*"
+      testing:
+        patterns:
+          - "xunit*"
+          - "AwesomeAssertions"
+    ignore:
+      # Stay on the .NET LTS release train (net10.0); bump these majors together with the target framework.
+      - dependency-name: "Microsoft.AspNetCore.*"
+        update-types: [ "version-update:semver-major" ]
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        update-types: [ "version-update:semver-major" ]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "dotnet-sdk"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: [ "version-update:semver-major" ]

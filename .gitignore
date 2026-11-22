@@ -388,3 +388,12 @@ FodyWeavers.xsd
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# Local environment / secrets (e.g. PositionStackApiKey) - never commit these
+.env
+.env.*
+*.env
+appsettings.*.local.json
+
+# Local NuGet package cache (e.g. when building inside a container)
+.nuget-cache/

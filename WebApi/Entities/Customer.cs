@@ -1,57 +1,34 @@
-﻿namespace CustomerStoreApi.Entities
+﻿using System;
+
+namespace CustomerStoreApi.Entities;
+
+/// <summary>
+/// Defines a customer, as persisted in the database.
+/// </summary>
+public sealed class Customer
 {
     /// <summary>
-    /// Defines a customer.
+    /// Gets or sets the customer identifier.
     /// </summary>
-    public partial class Customer
-    {
-        #region Public Properties
+    public Guid Id { get; set; }
 
-        /// <summary>
-        /// Gets or sets the customer identifier.
-        /// </summary>
-        public string Id
-        {
-            get;
-            set;
-        }
+    /// <summary>
+    /// Gets or sets the customer name.
+    /// </summary>
+    public required string Name { get; set; }
 
-        /// <summary>
-        /// Gets or sets the customer name.
-        /// </summary>
-        public string Name
-        {
-            get;
-            set;
-        }
+    /// <summary>
+    /// Gets or sets the customer email address.
+    /// </summary>
+    public required string Email { get; set; }
 
-        /// <summary>
-        /// Gets or sets the customer email address.
-        /// </summary>
-        public string Email
-        {
-            get;
-            set;
-        }
+    /// <summary>
+    /// Gets or sets the customer address.
+    /// </summary>
+    public string? Address { get; set; }
 
-        /// <summary>
-        /// Gets or sets the customer address.
-        /// </summary>
-        public string Address
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Gets or sets the customer vat number.
-        /// </summary>
-        public string VatNumber
-        {
-            get;
-            set;
-        }
-
-        #endregion
-    }
+    /// <summary>
+    /// Gets or sets the customer VAT number.
+    /// </summary>
+    public string? VatNumber { get; set; }
 }
