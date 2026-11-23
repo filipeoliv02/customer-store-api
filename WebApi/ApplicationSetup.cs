@@ -98,8 +98,11 @@ public static class ApplicationSetup
                 "PositionStack:BaseAddress must be an absolute HTTPS URI.")
             .ValidateOnStart();
 
+        services.AddMemoryCache();
+        services.AddSingleton<GeolocationRetryPolicy>();
+
         // Typed client: HttpClient instances and handlers are pooled by IHttpClientFactory.
-        services.AddHttpClient<IGeoLocationService, PositionStackGeolocationService>((serviceProvider, client) =>
+        services.AddHttpClient<PositionStackGeolocationService>((serviceProvider, client) =>
         {
             PositionStackOptions options = serviceProvider.GetRequiredService<IOptions<PositionStackOptions>>().Value;
 
@@ -107,6 +110,15 @@ public static class ApplicationSetup
             string baseAddress = options.BaseAddress.AbsoluteUri;
             client.BaseAddress = new Uri(baseAddress.EndsWith('/') ? baseAddress : baseAddress + "/");
             client.Timeout = options.Timeout;
+        });
+
+        services.AddSingleton<IGeoLocationService>(serviceProvider =>
+        {
+            PositionStackGeolocationService inner = serviceProvider.GetRequiredService<PositionStackGeolocationService>();
+            return new CachedGeolocationService(
+                inner,
+                serviceProvider.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>(),
+                serviceProvider.GetRequiredService<IOptions<PositionStackOptions>>());
         });
     }
 }

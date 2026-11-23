@@ -27,6 +27,7 @@ public sealed partial class PositionStackGeolocationService : IGeoLocationServic
     private readonly HttpClient httpClient;
     private readonly IOptions<PositionStackOptions> options;
     private readonly ILogger<PositionStackGeolocationService> logger;
+    private readonly GeolocationRetryPolicy retryPolicy;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PositionStackGeolocationService"/> class.
@@ -34,14 +35,17 @@ public sealed partial class PositionStackGeolocationService : IGeoLocationServic
     /// <param name="httpClient">The HTTP client, configured with the PositionStack base address.</param>
     /// <param name="options">The PositionStack options.</param>
     /// <param name="logger">The logger.</param>
+    /// <param name="retryPolicy">An optional testable retry policy.</param>
     public PositionStackGeolocationService(
         HttpClient httpClient,
         IOptions<PositionStackOptions> options,
-        ILogger<PositionStackGeolocationService> logger)
+        ILogger<PositionStackGeolocationService> logger,
+        GeolocationRetryPolicy? retryPolicy = null)
     {
         this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         this.options = options ?? throw new ArgumentNullException(nameof(options));
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.retryPolicy = retryPolicy ?? new GeolocationRetryPolicy(options);
     }
 
     /// <inheritdoc/>
@@ -63,8 +67,8 @@ public sealed partial class PositionStackGeolocationService : IGeoLocationServic
 
         try
         {
-            using HttpResponseMessage response = await this.httpClient
-                .GetAsync(requestUri, cancellationToken)
+            using HttpResponseMessage response = await this.retryPolicy
+                .SendAsync(this.httpClient, requestUri, cancellationToken)
                 .ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)

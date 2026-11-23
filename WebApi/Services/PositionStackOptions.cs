@@ -39,4 +39,22 @@ public sealed class PositionStackOptions
     /// </summary>
     [Range(typeof(TimeSpan), "00:00:01", "00:01:00")]
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// Gets or sets how long normalized geolocation results are retained in memory.
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:00:01", "1.00:00:00")]
+    public TimeSpan CacheTtl { get; set; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// Gets or sets the maximum number of HTTP retry attempts after the initial attempt.
+    /// </summary>
+    [Range(0, 5)]
+    public int RetryCount { get; set; } = 2;
+
+    /// <summary>
+    /// Gets or sets the initial exponential backoff delay.
+    /// </summary>
+    [Range(typeof(TimeSpan), "00:00:00", "00:00:10")]
+    public TimeSpan RetryBaseDelay { get; set; } = TimeSpan.FromMilliseconds(200);
 }
